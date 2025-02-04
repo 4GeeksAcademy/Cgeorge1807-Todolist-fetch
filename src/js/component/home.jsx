@@ -9,34 +9,68 @@ const Home = () => {
 	const [tareas, setTareas] = useState("")
 
 
-	const agregar = (evento) => {
+	// const agregar = (evento) => {
 
+	// 	if (evento.key === "Enter") {
+	// 		evento.preventDefault()
+	// 		// setLista([...lista, tareas])
+	// 		// setTareas("")
+	// 	}
+	// }
+
+	const agregar = async (evento) => {
 		if (evento.key === "Enter") {
-			evento.preventDefault()
-			setLista([...lista, tareas])
-			setTareas("")
-		}
-	}
-
-	const eliminar = (index) => {
-		let aux = []
-		aux = lista.filter((item, id) => {
-			if (index != id) {
-				return item
+			evento.preventDefault();
+			if (tareas !== "") {
+				// setLista([...lista, { label: tareas, done: false }]);
+				try {
+					const response = await fetch("https://playground.4geeks.com/todo/todos/Cgeorge", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							label: tareas,
+							done: false
+						})
+					})
+					if (response.status == 201) {
+						await obtenerTareas()
+						setTareas("");
+						return
+					}
+				} catch (error) {
+					console.log(error)
+				}
 			}
-		})
-		setLista(aux)
+		}
+	};
+
+	const eliminar = async (id) => {
+		// console.log(id)
+		try {
+			const response = await fetch(`https://playground.4geeks.com/todo/todos/${id}`, {
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" }
+			})
+			// console.log(response)
+			if (response.status == 204) {
+				await obtenerTareas()
+				return
+			}
+		} catch (error) {
+			console.log(error)
+		}
 	}
 
 	const obtenerTareas = async () => {
 		try {
 			const response = await fetch("https://playground.4geeks.com/todo/users/Cgeorge")
-			if (response.status == 404){ 
-			//Si no existe el usuario, lo va a crear
-			await crearUsuario()
-			return
+			if (response.status == 404) {
+				//Si no existe el usuario, lo va a crear
+				await crearUsuario()
+				return
 			}
 			const data = await response.json()
+			// console.log(data.todos)
 			setLista(data.todos)
 		} catch (error) {
 			console.log(error)
@@ -45,16 +79,16 @@ const Home = () => {
 
 	const crearUsuario = async () => {
 		try {
-		const response = await fetch("https://playground.4geeks.com/todo/users/Cgeorge",{
-			method: "POST",
-			headers: {"Content-Type":"application/json"}
-		})	
-		if (response.status==201){
-			await obtenerTareas() 
-			return
-		}
+			const response = await fetch("https://playground.4geeks.com/todo/users/Cgeorge", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" }
+			})
+			if (response.status == 201) {
+				await obtenerTareas()
+				return
+			}
 		} catch (error) {
-		console.log (error)	
+			console.log(error)
 		}
 	}
 
@@ -81,7 +115,7 @@ const Home = () => {
 					lista.map((tarea, index) => (
 						<li key={index} className="list-group-item border border-secondary">
 							{tarea.label}
-							<button type="button" class="btn btn-outline-danger float-end hidden-icon" onClick={() => eliminar(index)}>x</button>
+							<button type="button" class="btn btn-outline-danger float-end hidden-icon" onClick={() => eliminar(tarea.id)}>x</button>
 						</li>
 					))
 				}
